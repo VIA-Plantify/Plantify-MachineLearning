@@ -13,3 +13,5 @@ uv run python -m grpc_tools.protoc \
   --grpc_python_out=./.generated \
   --pyi_out=./.generated \
   ./protos/*.proto
+
+echo "GRPC compilation successful!!!"
