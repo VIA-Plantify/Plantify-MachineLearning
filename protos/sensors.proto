@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcService";
+
+package sensors;
+import "google/protobuf/empty.proto";
+
+message SensorResponse {
+   double SoilHumidity = 1;
+   double LightIntensity = 2;
+   double AirHumidity = 3;
+   double Temperature = 4;
+   string plantMAC = 5;
+   int64 Id = 6;
+}
+message CreateSensorDataRequest{
+  double SoilHumidity = 1;
+  double LightIntensity = 2;
+  double AirHumidity = 3;
+  double Temperature = 4;
+  string plantMAC = 5;
+}
+message GetLatestSensorDataRequest{
+  string plantMac = 1;
+}
+message PreviousSensorResponses{
+  repeated double PreviousSoilHumidity = 1;
+  repeated double PreviousLightIntensity = 2;
+  repeated double PreviousAirHumidity = 3;
+  repeated double PreviousTemperature = 4;
+  string plantMAC = 5;
+}
+service SensorServiceProto {
+  rpc Create(CreateSensorDataRequest) returns (google.protobuf.Empty);
+  rpc GetLatest(GetLatestSensorDataRequest) returns (SensorResponse);
+}
