@@ -1,9 +1,7 @@
 syntax = "proto3";
 
 package watering;
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
 message WateringResponse{
   string plantMAC = 1;
   int32 Id = 2;
