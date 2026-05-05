@@ -1,0 +1,19 @@
+name: dev
+
+services:
+  maldev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: maldev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: sleep infinity
+    environment:
+      GRPC_HOST: host.docker.internal
+      GRPC_PORT: 10081
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "12080:12080"
