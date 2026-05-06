@@ -3,7 +3,7 @@ from pathlib import Path
 
 from google.protobuf.json_format import MessageToDict
 
-generated_path = Path(__file__).resolve().parents[1] / "generated"
+generated_path = Path(__file__).resolve().parents[1] / ".generated"
 sys.path.insert(0, str(generated_path))
 
 import grpc
