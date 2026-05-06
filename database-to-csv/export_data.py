@@ -2,7 +2,7 @@ import csv
 import os
 import psycopg2
 
-# Connect to PostgreSQL
+# Connect to PostgreSQL TODO: get from grpc getAllPlants()
 conn = psycopg2.connect(
     host='host.docker.internal',
     port=55432,
