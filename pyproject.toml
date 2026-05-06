@@ -10,6 +10,7 @@ dependencies = [
     "grpcio-tools>=1.80.0",
     "pandas>=3.0.2",
     "protobuf>=6.33.6",
+    "psycopg2-binary>=2.9.12",
     "pydantic-settings>=2.14.0",
     "pytest>=9.0.3",
     "python-dotenv>=1.2.2",
