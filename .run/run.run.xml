@@ -4,7 +4,7 @@
       <list>
         <option value="main:app" />
         <option value="--host" />
-        <option value="localhost" />
+        <option value="0.0.0.0" />
         <option value="--port" />
         <option value="12080" />
         <option value="--reload" />
