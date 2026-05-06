@@ -6,8 +6,8 @@ from entities.Plant import Plant
 from entities.Sensor import Sensor
 from entities.Watering import Watering
 
-class PlantDataGenerator:
 
+class PlantDataGenerator:
     PLANT_NAMES = [
         "Monstera", "Pothos", "Snake Plant", "Fiddle Leaf Fig", "ZZ Plant",
         "Rubber Plant", "Peace Lily", "Philodendron", "Calathea", "Dracaena",
@@ -16,12 +16,12 @@ class PlantDataGenerator:
 
     # Default values if not provided at the end in def main()
     def __init__(
-        self,
-        num_users: int = 1,
-        plants_per_user: int = 1,
-        readings_per_plant: int = 100,
-        days_of_data: int = 30,
-        waterings_per_plant: int = 10
+            self,
+            num_users: int = 1,
+            plants_per_user: int = 1,
+            readings_per_plant: int = 100,
+            days_of_data: int = 30,
+            waterings_per_plant: int = 10
     ):
 
         self.num_users = num_users
@@ -29,7 +29,7 @@ class PlantDataGenerator:
         self.readings_per_plant = readings_per_plant
         self.days_of_data = days_of_data
         self.waterings_per_plant = waterings_per_plant
-        self.base_timestamp = datetime.now() - timedelta(days=days_of_data) # gives data from x days ago from now
+        self.base_timestamp = datetime.now() - timedelta(days=days_of_data)  # gives data from x days ago from now
 
     def generate_users(self) -> List[str]:
         return [f"user_{i:04d}" for i in range(self.num_users)]
@@ -66,7 +66,7 @@ class PlantDataGenerator:
             timestamp = self.base_timestamp + timedelta(hours=i)
 
             reading = Sensor(
-                plant_mac = plant_mac,
+                plant_mac=plant_mac,
                 temperature=round(temperature, 2),
                 air_humidity=round(air_humidity, 2),
                 soil_humidity=round(soil_humidity, 2),
@@ -81,14 +81,11 @@ class PlantDataGenerator:
 
         waterings = []
 
-        # Start somewhere in the past
         last_water_time = self.base_timestamp
 
         for i in range(self.waterings_per_plant):
-            # Simulate water level after watering
             water_level = round(random.uniform(60, 100), 2)
 
-            # Plants usually need watering every 2–5 days
             next_watering_gap_days = random.uniform(2, 5)
 
             predicted_future_water_time = (
@@ -96,8 +93,6 @@ class PlantDataGenerator:
                     timedelta(days=next_watering_gap_days)
             )
 
-            # Pump time related to water level
-            # lower water level -> longer pump time
             pump_time = round(
                 max(5, (100 - water_level) * 0.6),
                 2
@@ -113,7 +108,6 @@ class PlantDataGenerator:
 
             waterings.append(watering)
 
-            # Advance timeline realistically
             last_water_time = predicted_future_water_time
 
         return waterings
@@ -133,7 +127,7 @@ class PlantDataGenerator:
             optimal_light_intensity=optimal_values["optimal_light_intensity"],
             sensors=sensor_readings,
             waterings=waterings,
-            name = random.choice(self.PLANT_NAMES)
+            name=random.choice(self.PLANT_NAMES)
         )
 
         return plant_data
@@ -230,8 +224,8 @@ class PlantDataGenerator:
                         watering.pump_time_in_seconds
                     ])
 
-def main():
 
+def main():
     NUM_USERS = 5
     PLANTS_PER_USER = 3
     READINGS_PER_PLANT = 100
