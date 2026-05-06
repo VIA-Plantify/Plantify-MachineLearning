@@ -34,7 +34,6 @@ class plant_grpc_client():
     async def get_all(self) -> dict:
         async with grpc.aio.insecure_channel(settings.grpc_address) as channel:
             stub = plant_service.PlantServiceProtoStub(channel)
-            stub = plant_service.PlantServiceProtoStub(channel)
 
             request = empty_pb2.Empty()
 

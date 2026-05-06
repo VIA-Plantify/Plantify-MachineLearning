@@ -2,8 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    grpc_host: str = "localhost"
-    grpc_port: int = 10081
+    GRPC_HOST: str = "localhost"
+    GRPC_PORT: int = 10081
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     @property
     def grpc_address(self) -> str:
-        return f"{self.grpc_host}:{self.grpc_port}"
+        return f"{self.GRPC_HOST}:{self.GRPC_PORT}"
 
 
 settings = Settings()
