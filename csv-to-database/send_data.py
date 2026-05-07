@@ -20,55 +20,44 @@ async def get_all_by_username(username: str,
 result = asyncio.run(get_all_by_username(username="janedoe", number_of_readings=1, number_of_waterings=1))
 print(result)
 
-#TODO get the last id from the grpc and add new data after that id, and save it in sql file; NO connection to the db
+def format_sql_value(value):
+    """Format a CSV value for SQL insertion"""
+    if not value or value.upper() == 'NULL':
+        return 'NULL'
+    try:
+        float(value)
+        return value
+    except ValueError:
+        escaped = value.replace("'", "''")
+        return f"'{escaped}'"
+
+#TODO get the last id from the grpc and add new data after that id
 
 sql_file = open('plantify_data.sql', 'w')
 
-# Read CSV file and pipe it to PostgreSQL
+# Read Plants CSV with column names
 with open('../mockdata/plants_users.csv', 'r') as f:
-    reader = csv.reader(f)
-    headers = next(reader)  # Skip header row
+    reader = csv.DictReader(f)
     for row in reader:
-        # Format values: handle strings with quotes, numbers as-is
-        formatted_values = []
-        for value in row:
-            if value.isdigit() or (value.count('.') == 1 and value.replace('.', '').isdigit()):
-                formatted_values.append(value)  # Numbers
-            else:
-                formatted_values.append(f"'{value}'")  # Strings with quotes
+        columns = ', '.join(f'"{k}"' for k in row.keys())
+        values = ', '.join(format_sql_value(v) for v in row.values())
+        sql_file.write(f"INSERT INTO \"Plants\" ({columns}) VALUES ({values});\n")
 
-        values_str = ', '.join(formatted_values)
-        sql_file.write(f"INSERT INTO \"Plants\" VALUES ({values_str});\n")
-
-# Read SensorDatas CSV and generate INSERT statements
+# Read SensorDatas CSV with column names
 with open('../mockdata/sensor_datas_users.csv', 'r') as f:
-    reader = csv.reader(f)
-    headers = next(reader)  # Skip header row
+    reader = csv.DictReader(f)
     for row in reader:
-        formatted_values = []
-        for value in row:
-            if value.isdigit() or (value.count('.') == 1 and value.replace('.', '').isdigit()):
-                formatted_values.append(value)
-            else:
-                formatted_values.append(f"'{value}'")
+        columns = ', '.join(f'"{k}"' for k in row.keys())
+        values = ', '.join(format_sql_value(v) for v in row.values())
+        sql_file.write(f"INSERT INTO \"SensorDatas\" ({columns}) VALUES ({values});\n")
 
-        values_str = ', '.join(formatted_values)
-        sql_file.write(f"INSERT INTO \"SensorDatas\" VALUES ({values_str});\n")
-
-# Read Waterings CSV and generate INSERT statements
+# Read Waterings CSV with column names
 with open('../mockdata/waterings_users.csv', 'r') as f:
-    reader = csv.reader(f)
-    headers = next(reader)  # Skip header row
+    reader = csv.DictReader(f)
     for row in reader:
-        formatted_values = []
-        for value in row:
-            if value.isdigit() or (value.count('.') == 1 and value.replace('.', '').isdigit()):
-                formatted_values.append(value)
-            else:
-                formatted_values.append(f"'{value}'")
-
-        values_str = ', '.join(formatted_values)
-        sql_file.write(f"INSERT INTO \"Waterings\" VALUES ({values_str});\n")
+        columns = ', '.join(f'"{k}"' for k in row.keys())
+        values = ', '.join(format_sql_value(v) for v in row.values())
+        sql_file.write(f"INSERT INTO \"Waterings\" ({columns}) VALUES ({values});\n")
 
 sql_file.close()
 print("SQL script generated: plantify_data.sql")
