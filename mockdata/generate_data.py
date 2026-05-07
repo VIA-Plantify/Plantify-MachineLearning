@@ -14,25 +14,44 @@ class PlantDataGenerator:
         "Spider Plant", "Boston Fern", "Succulent", "Cactus", "Orchid"
     ]
 
-    # Default values if not provided at the end in def main()
     def __init__(
             self,
-            num_users: int = 1,
             plants_per_user: int = 1,
             readings_per_plant: int = 100,
             days_of_data: int = 30,
-            waterings_per_plant: int = 10
+            waterings_per_plant: int = 10,
+            users_csv: str = None
     ):
 
-        self.num_users = num_users
         self.plants_per_user = plants_per_user
         self.readings_per_plant = readings_per_plant
         self.days_of_data = days_of_data
         self.waterings_per_plant = waterings_per_plant
-        self.base_timestamp = datetime.now() - timedelta(days=days_of_data)  # gives data from x days ago from now
+        self.users_csv = users_csv
+        self.base_timestamp = datetime(2025, 1, 1, 12, 0, 0)
+
+    def load_users_from_csv(self, filename: str) -> List[str]:
+        users = []
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    if row:
+                        username = row[0].strip()
+                        users.append(username)
+            print(f"Loaded {len(users)} users from {filename}")
+            return users
+        except FileNotFoundError:
+            print(f"Error: File '{filename}' not found.")
+            return []
 
     def generate_users(self) -> List[str]:
-        return [f"user_{i:04d}" for i in range(self.num_users)]
+        """Generate or load users based on configuration."""
+        if self.users_csv:
+            return self.load_users_from_csv(self.users_csv)
+        else:
+            raise ValueError("users_csv parameter must be provided")
 
     def generate_mac_address(self) -> str:
         return f"{random.randint(0, 255):02x}:{random.randint(0, 255):02x}:" \
@@ -93,10 +112,10 @@ class PlantDataGenerator:
                     timedelta(days=next_watering_gap_days)
             )
 
-            pump_time = round(
+            pump_time = int(round(
                 max(5, (100 - water_level) * 0.6),
                 2
-            )
+            ))
 
             watering = Watering(
                 plant_mac=plant_mac,
@@ -226,18 +245,20 @@ class PlantDataGenerator:
 
 
 def main():
-    NUM_USERS = 5
+    random.seed(42)
+
     PLANTS_PER_USER = 3
     READINGS_PER_PLANT = 100
     DAYS_OF_DATA = 30
     WATERINGS_PER_PLANT = 10
+    USERS_CSV = "../database-to-csv/users.csv"
 
     generator = PlantDataGenerator(
-        num_users=NUM_USERS,
         plants_per_user=PLANTS_PER_USER,
         readings_per_plant=READINGS_PER_PLANT,
         days_of_data=DAYS_OF_DATA,
-        waterings_per_plant=WATERINGS_PER_PLANT
+        waterings_per_plant=WATERINGS_PER_PLANT,
+        users_csv=USERS_CSV
     )
 
     plants = generator.generate_all_plants()
