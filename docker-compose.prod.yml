@@ -1,0 +1,26 @@
+services:
+  plantify-ml-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+
+    image: plantify-ml-api:latest
+    container_name: plantify-ml-api
+
+    ports:
+      - "${HOST_PORT:-12081}:${APP_PORT:-12080}"
+
+    env_file:
+      - .env.compose
+
+    environment:
+      APP_HOST: ${APP_HOST:-0.0.0.0}
+      APP_PORT: ${APP_PORT:-12080}
+
+    networks:
+      - plantify-network
+
+networks:
+  plantify-network:
+    external: true
+    name: plantify-network

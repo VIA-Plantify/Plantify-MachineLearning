@@ -11,9 +11,5 @@ message WateringResponse{
   double WaterLevel = 6;
 }
 message PreviousWateringResponses{
-  string plantMAC = 1;
-  repeated google.protobuf.Timestamp LastWaterTime = 3;
-  repeated google.protobuf.Timestamp PredictedFutureWaterTime = 4;
-  repeated int32 PumpTimeInSeconds = 5;
-  repeated double WaterLevel = 6;
+  repeated WateringResponse Readings = 1;
 }

@@ -11,23 +11,10 @@ enum TemperatureScale {
 }
 
 // Requests
-message CreatePlantRequest {
-  string username = 1;
-  string name = 2;
-  string MAC = 3;
-
-  double optimalTemperature = 4;
-  double optimalAirHumidity = 5;
-  double optimalSoilHumidity = 6;
-  double optimalLightIntensity = 7;
-  int64 optimalLightPeriodSeconds = 8;
-
-  TemperatureScale temperatureScale = 9;
-}
-
 message GetPlantsByUsernameRequest {
   string username = 1;
   int32 numberOfReadings = 2;
+  int32 numberOfWateringReadings = 3;
 }
 
 message GetPlantRequest {
@@ -36,26 +23,6 @@ message GetPlantRequest {
   int32 numberOfSensorReadings = 3;
   int32 numberOfWateringReadings = 4;
 }
-
-message DeletePlantRequest {
-  string username = 1;
-  string plantMAC = 2;
-}
-
-message UpdatePlantRequest {
-  string username = 1;
-  string plantMAC = 2;
-  string name = 3;
-
-  double optimalTemperature = 4;
-  double optimalAirHumidity = 5;
-  double optimalSoilHumidity = 6;
-  double optimalLightIntensity = 7;
-  int64 optimalLightPeriodSeconds = 8;
-
-  TemperatureScale temperatureScale = 9;
-}
-
 // Responses
 message PlantResponse {
   string plantMAC = 1;
@@ -85,10 +52,7 @@ message GetManyPlantResponse {
 
 // Service
 service PlantServiceProto {
-  rpc Create(CreatePlantRequest) returns (PlantResponse);
   rpc GetPlantsByUsername(GetPlantsByUsernameRequest) returns (GetManyPlantResponse);
   rpc GetAllPlants(google.protobuf.Empty) returns (GetManyPlantResponse);
   rpc Get(GetPlantRequest) returns (PlantResponse);
-  rpc Update(UpdatePlantRequest) returns (google.protobuf.Empty);
-  rpc Delete(DeletePlantRequest) returns (google.protobuf.Empty);
 }
