@@ -86,7 +86,7 @@ async def main():
     sql_file = open('plantify_data.sql', 'w')
 
     # Read Plants CSV with column names
-    with open('../mockdata/plants_users.csv', 'r') as f:
+    with open('../mockdata/plants.csv', 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
             columns = ', '.join(f'"{k}"' for k in row.keys())
@@ -94,7 +94,7 @@ async def main():
             sql_file.write(f"INSERT INTO \"Plants\" ({columns}) VALUES ({values});\n")
 
     # Read SensorDatas CSV with column names and increment IDs
-    with open('../mockdata/sensor_datas_users.csv', 'r') as f:
+    with open('../mockdata/sensor_datas.csv', 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
             row = increment_id_in_row(row, 'id', max_sensor_id)
@@ -103,7 +103,7 @@ async def main():
             sql_file.write(f"INSERT INTO \"SensorDatas\" ({columns}) VALUES ({values});\n")
 
     # Read Waterings CSV with column names and increment IDs
-    with open('../mockdata/waterings_users.csv', 'r') as f:
+    with open('../mockdata/waterings.csv', 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
             row = increment_id_in_row(row, 'id', max_watering_id)
