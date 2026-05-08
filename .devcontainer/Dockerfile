@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM tensorflow/tensorflow:2.16.0-gpu
 
 WORKDIR /workspace
 
@@ -9,8 +9,6 @@ RUN apt-get update && apt-get install -y \
     procps \
     ca-certificates \
     gnupg \
-    python3 \
-    python3-pip \
     tree \
     && rm -rf /var/lib/apt/lists/*
 

@@ -20,8 +20,10 @@ class PlantDataGenerator:
             readings_per_plant: int = 100,
             days_of_data: int = 30,
             waterings_per_plant: int = 10,
+            watering_threshold_precent: float = 0.85,
     ):
 
+        self.watering_threshold_precent = watering_threshold_precent
         self.plants_per_user = plants_per_user
         self.readings_per_plant = readings_per_plant
         self.days_of_data = days_of_data
@@ -88,8 +90,15 @@ class PlantDataGenerator:
         optimal_soil = optimal_values["optimal_soil_humidity"]
 
         # plant needs watering when soil drops below 85% of optimal (less stricter threshold so we have more watering data)
-        watering_threshold = optimal_soil * 0.85
-
+        watering_threshold = optimal_soil * self.watering_threshold_precent
+        first = sensor_readings[0]
+        waterings.append(Watering(
+            plant_mac=plant_mac,
+            last_water_time=first.timestamp,
+            predicted_future_water_time=first.timestamp + timedelta(days=3),
+            water_level=100.0,
+            pump_time_in_seconds=10
+        ))
         for reading in sensor_readings:
 
             # check if soil humidity is too low
@@ -102,9 +111,7 @@ class PlantDataGenerator:
 
                 # calculate how long the pump should run
                 # minimum 5 seconds
-                pump_time = int(
-                    max(5, (100 - water_level) * 0.6)
-                )
+                pump_time = int(max(5, (optimal_soil - reading.soil_humidity) * 2))
 
                 # predict next watering time
                 predicted_future_water_time = (
@@ -249,15 +256,16 @@ def main():
     random.seed(42)
 
     PLANTS_PER_USER = 3
-    READINGS_PER_PLANT = 100
-    DAYS_OF_DATA = 30
-    WATERINGS_PER_PLANT = 10
+    READINGS_PER_PLANT = 2000
+    DAYS_OF_DATA = 83
+    WATERINGS_PER_PLANT = 500
 
     generator = PlantDataGenerator(
         plants_per_user=PLANTS_PER_USER,
         readings_per_plant=READINGS_PER_PLANT,
         days_of_data=DAYS_OF_DATA,
         waterings_per_plant=WATERINGS_PER_PLANT,
+        watering_threshold_precent= 0.80
     )
 
     plants = generator.generate_all_plants()
