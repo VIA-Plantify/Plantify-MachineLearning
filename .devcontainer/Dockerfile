@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.16.0-gpu
+FROM tensorflow/tensorflow:nightly-gpu
 
 WORKDIR /workspace
 
