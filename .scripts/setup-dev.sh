@@ -22,14 +22,25 @@ else
   echo "Docker not available, skipping Docker network setup."
 fi
 
-echo "Checking uv..."
+# uv install
+if ! command -v uv >/dev/null 2>&1; then
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+export PATH="$HOME/.local/bin:$PATH"
+
 uv --version
 
-echo "Syncing Python environment..."
+rm -rf .venv
+uv venv --python 3.11
+source .venv/bin/activate
+
+echo "Python: $(which python)"
+
 uv sync
 
-echo "Starting grpc initialization..."
+echo "Installing TensorFlow GPU..."
+uv pip install "tensorflow[and-cuda]"
 
-bash /workspace/.scripts/compile-grpc.sh
-
-echo "Dev setup complete."
+if [ -f "/workspace/.scripts/compile-grpc.sh" ]; then
+  bash /workspace/.scripts/compile-grpc.sh
