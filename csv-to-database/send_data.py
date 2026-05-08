@@ -1,5 +1,4 @@
 import csv
-import psycopg2
 from grpc import RpcError, StatusCode
 from grpc_clients.plant_grpc_client import plant_grpc_client
 import asyncio
