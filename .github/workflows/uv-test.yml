@@ -25,3 +25,5 @@ jobs:
 
       - name: Check syntax / compile
         run: uv run python -m compileall .
+      - name: Check tests
+        run: uv run pytest
