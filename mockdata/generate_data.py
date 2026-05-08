@@ -256,9 +256,9 @@ def main():
     random.seed(42)
 
     PLANTS_PER_USER = 3
-    READINGS_PER_PLANT = 4000
-    DAYS_OF_DATA = 167
-    WATERINGS_PER_PLANT = 500
+    READINGS_PER_PLANT = 10000
+    DAYS_OF_DATA = 365
+    WATERINGS_PER_PLANT = 1000
 
     generator = PlantDataGenerator(
         plants_per_user=PLANTS_PER_USER,

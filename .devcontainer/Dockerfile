@@ -22,4 +22,6 @@ ENV PATH="/root/.local/bin:$PATH"
 
 RUN python3 -m pip install --upgrade pip
 
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
 CMD ["sleep", "infinity"]
