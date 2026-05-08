@@ -96,38 +96,56 @@ class PlantDataGenerator:
 
         return readings
 
-    def generate_waterings(self, plant_mac: str) -> List[Watering]:
+    def generate_waterings(
+            self,
+            plant_mac: str,
+            sensor_readings: List[Sensor],
+            optimal_values: dict
+    ) -> List[Watering]:
 
         waterings = []
 
-        last_water_time = self.base_timestamp
+        # get the plant's optimal soil humidity
+        optimal_soil = optimal_values["optimal_soil_humidity"]
 
-        for i in range(self.waterings_per_plant):
-            water_level = round(random.uniform(60, 100), 2)
+        # plant needs watering when soil drops below 85% of optimal (less stricter threshold so we have more watering data)
+        watering_threshold = optimal_soil * 0.85
 
-            next_watering_gap_days = random.uniform(2, 5)
+        for reading in sensor_readings:
 
-            predicted_future_water_time = (
-                    last_water_time +
-                    timedelta(days=next_watering_gap_days)
-            )
+            # check if soil humidity is too low
+            if reading.soil_humidity <= watering_threshold:
+                # generate random water tank level
+                water_level = round(
+                    random.uniform(60, 100),
+                    2
+                )
 
-            pump_time = int(round(
-                max(5, (100 - water_level) * 0.6),
-                2
-            ))
+                # calculate how long the pump should run
+                # minimum 5 seconds
+                pump_time = int(
+                    max(5, (100 - water_level) * 0.6)
+                )
 
-            watering = Watering(
-                plant_mac=plant_mac,
-                predicted_future_water_time=predicted_future_water_time,
-                last_water_time=last_water_time,
-                water_level=water_level,
-                pump_time_in_seconds=pump_time
-            )
+                # predict next watering time
+                predicted_future_water_time = (
+                        reading.timestamp +
+                        timedelta(days=random.uniform(2, 5))
+                )
 
-            waterings.append(watering)
+                # create watering object
+                watering = Watering(
+                    plant_mac=plant_mac,
 
-            last_water_time = predicted_future_water_time
+                    last_water_time=reading.timestamp,
+
+                    predicted_future_water_time=predicted_future_water_time,
+
+                    water_level=water_level,
+                    pump_time_in_seconds=pump_time
+                )
+
+                waterings.append(watering)
 
         return waterings
 
@@ -135,7 +153,11 @@ class PlantDataGenerator:
         optimal_values = self.generate_plant_optimal_values()
         mac = self.generate_mac_address()
         sensor_readings = self.generate_sensor_readings(mac, optimal_values)
-        waterings = self.generate_waterings(mac)
+        waterings = self.generate_waterings(
+            mac,
+            sensor_readings,
+            optimal_values
+        )
 
         plant_data = Plant(
             MAC=mac,
