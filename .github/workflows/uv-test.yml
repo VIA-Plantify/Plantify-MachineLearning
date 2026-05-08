@@ -22,6 +22,12 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen
-
+      
+      - name: Generate protobuf files
+        run: bash .scripts/compile-grpc.sh
+      
       - name: Check syntax / compile
         run: uv run python -m compileall .
+      
+      - name: Check tests
+        run: uv run pytest
