@@ -20,38 +20,17 @@ class PlantDataGenerator:
             readings_per_plant: int = 100,
             days_of_data: int = 30,
             waterings_per_plant: int = 10,
-            users_csv: str = None
     ):
 
         self.plants_per_user = plants_per_user
         self.readings_per_plant = readings_per_plant
         self.days_of_data = days_of_data
         self.waterings_per_plant = waterings_per_plant
-        self.users_csv = users_csv
         self.base_timestamp = datetime(2025, 1, 1, 12, 0, 0)
-
-    def load_users_from_csv(self, filename: str) -> List[str]:
-        users = []
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                reader = csv.reader(f)
-                next(reader)
-                for row in reader:
-                    if row:
-                        username = row[0].strip()
-                        users.append(username)
-            print(f"Loaded {len(users)} users from {filename}")
-            return users
-        except FileNotFoundError:
-            print(f"Error: File '{filename}' not found.")
-            return []
 
     def generate_users(self) -> List[str]:
         """Generate or load users based on configuration."""
-        if self.users_csv:
-            return self.load_users_from_csv(self.users_csv)
-        else:
-            raise ValueError("users_csv parameter must be provided")
+        return ['janedoe','Mario','Carolina',"Patrik","Teo"]
 
     def generate_mac_address(self) -> str:
         return f"{random.randint(0, 255):02x}:{random.randint(0, 255):02x}:" \
@@ -273,14 +252,12 @@ def main():
     READINGS_PER_PLANT = 100
     DAYS_OF_DATA = 30
     WATERINGS_PER_PLANT = 10
-    USERS_CSV = "../database-to-csv/users.csv"
 
     generator = PlantDataGenerator(
         plants_per_user=PLANTS_PER_USER,
         readings_per_plant=READINGS_PER_PLANT,
         days_of_data=DAYS_OF_DATA,
         waterings_per_plant=WATERINGS_PER_PLANT,
-        users_csv=USERS_CSV
     )
 
     plants = generator.generate_all_plants()
