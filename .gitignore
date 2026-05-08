@@ -167,3 +167,7 @@ cython_debug/
 *.idea
 *.vscode
 /.env.compose
+/database-to-csv/users.csv
+/mockdata/plants.csv
+/mockdata/sensor_datas.csv
+/mockdata/waterings.csv
