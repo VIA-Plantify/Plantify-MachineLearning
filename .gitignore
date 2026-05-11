@@ -171,3 +171,11 @@ cython_debug/
 /mockdata/plants.csv
 /mockdata/sensor_datas.csv
 /mockdata/waterings.csv
+/csv-to-database/plantify_data.sql
+/database-to-csv/plants.csv
+/.run/export_data.run.xml
+/.run/generate_data.run.xml
+/.run/send_data.run.xml
+/datapreparation/irrigation_prediction.csv
+/models/xgb_model.ubj
+/datapreparation/plant_health_data.csv

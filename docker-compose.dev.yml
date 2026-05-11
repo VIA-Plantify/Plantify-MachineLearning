@@ -10,6 +10,7 @@ services:
       - .:/workspace
     working_dir: /workspace
     command: sleep infinity
+    gpus: all
     environment:
       GRPC_HOST: host.docker.internal
       GRPC_PORT: 10081
