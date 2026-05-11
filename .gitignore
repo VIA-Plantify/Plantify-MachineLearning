@@ -176,3 +176,6 @@ cython_debug/
 /.run/export_data.run.xml
 /.run/generate_data.run.xml
 /.run/send_data.run.xml
+/datapreparation/irrigation_prediction.csv
+/models/xgb_model.ubj
+/datapreparation/plant_health_data.csv
