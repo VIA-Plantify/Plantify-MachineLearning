@@ -435,131 +435,67 @@ class PlantDataGenerator:
             sensor_readings: List[Sensor],
             optimal_values: dict,
     ) -> List[Watering]:
-        """
-        Pump time is now driven by five factors, not just soil deficit:
 
-          pump_time = base_seconds × ET_multiplier × noise
-
-        Where:
-          base_seconds  = soil_deficit × species_pump_sec_per_pct
-          ET_multiplier = f(temperature, air_humidity, light_intensity)
-                          — derived from Penman-Monteith ET model
-          noise         = small Gaussian jitter (real sensors are noisy)
-
-        This means all sensor columns become genuinely predictive features,
-        breaking the OptimalSoilHumidity dominance in the XGBoost model.
-        """
         profile = optimal_values["_profile"]
-        waterings = []
         optimal_soil = optimal_values["optimal_soil_humidity"]
-        watering_threshold = optimal_soil * self.watering_threshold_percent
-
-        min_interval_h = profile["watering_interval"][0] * 24
-        max_interval_h = profile["watering_interval"][1] * 24
         pump_sec_per_pct = profile["pump_sec_per_pct"]
 
-        # Bootstrap first watering
-        first = sensor_readings[0]
+        waterings = []
+        last_watered_at = sensor_readings[0].timestamp
+
+        # More realistic minimum time between waterings
+        min_hours_between = max(48.0, profile["watering_interval"][0] * 20)  # at least 2 days
+        max_hours_between = profile["watering_interval"][1] * 26
+
+        # First watering
         waterings.append(Watering(
             plant_mac=plant_mac,
-            last_water_time=first.timestamp,
-            predicted_future_water_time=(
-                first.timestamp +
-                timedelta(hours=random.uniform(min_interval_h, max_interval_h))
-            ),
-            water_level=round(random.uniform(80, 100), 2),
-            pump_time_in_seconds=round(max(5, (optimal_soil * 0.3) * pump_sec_per_pct), 1),
+            last_water_time=sensor_readings[0].timestamp,
+            predicted_future_water_time=sensor_readings[0].timestamp + timedelta(hours=random.uniform(120, 400)),
+            water_level=round(random.uniform(82, 100), 2),
+            pump_time_in_seconds=0.0,
         ))
 
-        last_watered_at = first.timestamp
-        cooldown_hours = min_interval_h
+        last_watered_at = sensor_readings[0].timestamp
 
-        for reading in sensor_readings:
-            hours_since = (reading.timestamp - last_watered_at).total_seconds() / 3600
+        for reading in sensor_readings[1:]:
+            hours_since = (reading.timestamp - last_watered_at).total_seconds() / 3600.0
 
-            if hours_since >= cooldown_hours and reading.soil_humidity <= watering_threshold:
+            soil_low_enough = reading.soil_humidity <= optimal_soil * self.watering_threshold_percent
+            very_dry = reading.soil_humidity < max(20, optimal_soil * 0.35)  # species-aware emergency
+
+            if hours_since >= min_hours_between and (soil_low_enough or very_dry):
+
                 deficit = max(0.0, optimal_soil - reading.soil_humidity)
-                temp_above  = max(0.0, reading.temperature - optimal_values["optimal_temperature"])
-                temp_below  = max(0.0, optimal_values["optimal_temperature"] - reading.temperature)
-                air_deficit = max(0.0, optimal_values["optimal_air_humidity"] - reading.air_humidity)
-                light_excess = max(0.0, reading.light_intensity - optimal_values["optimal_light_intensity"])
-                light_low    = max(0.0, optimal_values["optimal_light_intensity"] - reading.light_intensity)
+                et_mult = self._et_pump_multiplier(reading, optimal_values)
 
-                # ── Component 1: soil deficit ─────────────────────────────
-                soil_component = deficit * pump_sec_per_pct
+                # Outliers
+                outlier = 1.0
+                if random.random() < 0.15:
+                    outlier = random.choice([0.35, 0.55, 1.65, 2.3, 3.0])
 
-                # ── Component 2: temperature stress ───────────────────────
-                temp_component = temp_above * pump_sec_per_pct * 0.5
+                pump_time = max(6.0, (deficit * pump_sec_per_pct * 1.1) * et_mult * outlier)
+                pump_time = round(pump_time + random.gauss(0, pump_time * 0.18), 1)
 
-                # ── Component 3: air dryness ──────────────────────────────
-                air_component = air_deficit * pump_sec_per_pct * 0.2
-
-                # ── Component 4: light ────────────────────────────────────
-                light_component = (light_excess / 500.0) * pump_sec_per_pct * 0.3
-
-                # ── Component 5: time since last watering ─────────────────
-                time_component = (hours_since / 24.0) * pump_sec_per_pct * 0.12
-
-                # ── Interaction terms (nonlinear) ─────────────────────────
-                # Hot + dry air = disproportionately more evaporation
-                heat_x_dry    = (temp_above * air_deficit) * pump_sec_per_pct * 0.04
-                # Bright + dry air = more transpiration demand
-                light_x_dry   = (light_excess / 1000.0) * air_deficit * pump_sec_per_pct * 0.02
-                # Cool + low light = plant uses less water (negative interaction)
-                cool_x_dark   = -(temp_below * light_low / 1000.0) * pump_sec_per_pct * 0.03
-                # Large deficit + hot = urgency multiplier
-                deficit_x_heat = (deficit * temp_above) * pump_sec_per_pct * 0.025
-
-                # ── Structured noise (not just Gaussian) ──────────────────
-                # Simulates: manual top-ups, sensor drift, pot size variation
-                gaussian_noise  = random.gauss(1.0, 0.03)
-                # Occasional outlier: user gave extra water or pump ran longer
-                outlier = random.choices(
-                    [1.0, random.uniform(1.3, 2.0), random.uniform(0.5, 0.75)],
-                    weights=[0.85, 0.10, 0.05]
-                )[0]
-
-                pump_time = round(max(5.0, (
-                    soil_component * 0.6+(
-                     temp_component
-                    + air_component
-                    + light_component
-                    + time_component
-                    + heat_x_dry
-                    + light_x_dry
-                    + cool_x_dark
-                    + deficit_x_heat
-                )*0.3) * gaussian_noise * outlier), 1)
-
-                # Water tank depletes over the season
-                elapsed_days = (reading.timestamp - self.base_timestamp).days
-                water_level = round(
-                    min(100.0, max(10.0,
-                        100.0 - elapsed_days * random.uniform(0.05, 0.15)
-                        + random.gauss(0, 3))),
-                    2
-                )
-
-                # Predicted next watering: sooner if conditions are harsh
-                # high temp or dry air → interval shrinks toward minimum
-                stress = (temp_above / 5.0 + air_deficit / 20.0) * 0.3
-                interval_scale = max(0.5, min(1.5, 1.0 - stress))
-                raw_interval = random.uniform(min_interval_h, max_interval_h)
-                next_water = reading.timestamp + timedelta(
-                    hours=raw_interval * interval_scale
-                )
+                # Water level
+                days_total = (reading.timestamp - self.base_timestamp).days
+                water_level = max(6.0, 100 - days_total * random.uniform(0.1, 0.25))
+                if random.random() < 0.18:
+                    water_level = random.uniform(78, 100)
 
                 waterings.append(Watering(
                     plant_mac=plant_mac,
                     last_water_time=reading.timestamp,
-                    predicted_future_water_time=next_water,
-                    water_level=water_level,
+                    predicted_future_water_time=reading.timestamp + timedelta(
+                        hours=random.uniform(min_hours_between * 0.9, max_hours_between)
+                    ),
+                    water_level=round(water_level, 2),
                     pump_time_in_seconds=pump_time,
                 ))
 
                 last_watered_at = reading.timestamp
-                cooldown_hours = min_interval_h
 
+        print(f"Plant {plant_mac[-8:]} → Generated {len(waterings)} waterings ({profile['watering_interval']})")
         return waterings
 
     # ------------------------------------------------------------------
@@ -656,7 +592,7 @@ def main():
         readings_per_plant=10_000,
         days_of_data=365,
         waterings_per_plant=1_000,
-        watering_threshold_percent=0.80,
+        watering_threshold_percent=0.70,
     )
 
     plants = generator.generate_all_plants()
