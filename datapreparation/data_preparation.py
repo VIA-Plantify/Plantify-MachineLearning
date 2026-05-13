@@ -5,6 +5,7 @@ class Data_Preparation:
 # 6565555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555ta my cat wrote this
 
     def __init__(self, path="../mockdata/"):
+        self.path = path
         self.df_waterings = pd.read_csv(f'{path}waterings.csv')
         self.df_sensors   = pd.read_csv(f'{path}sensor_datas.csv')
         self.df_plants    = pd.read_csv(f'{path}plants.csv')
