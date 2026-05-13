@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import random
 import csv
 import math
+from pathlib import Path
 from typing import List
 
 
@@ -531,45 +532,92 @@ class PlantDataGenerator:
     # CSV export
     # ------------------------------------------------------------------
     @staticmethod
-    def export_plants_csv(plants: List[Plant], filename: str = "plants.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
+    def export_plants_csv(
+            plants: List[Plant],
+            output_dir: str | Path,
+            filename: str = "plants.csv"
+    ):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        filepath = output_dir / filename
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+
             writer.writerow([
                 "MAC", "Name", "Username",
                 "OptimalTemperature", "OptimalAirHumidity",
                 "OptimalSoilHumidity", "OptimalLightIntensity",
             ])
+
             for plant in plants:
                 writer.writerow([
-                    plant.MAC, plant.name, plant.username,
-                    plant.optimal_temperature, plant.optimal_air_humidity,
-                    plant.optimal_soil_humidity, plant.optimal_light_intensity,
+                    plant.MAC,
+                    plant.name,
+                    plant.username,
+                    plant.optimal_temperature,
+                    plant.optimal_air_humidity,
+                    plant.optimal_soil_humidity,
+                    plant.optimal_light_intensity,
                 ])
 
+        print(f"Saved: {filepath}")
+
     @staticmethod
-    def export_sensor_datas_csv(plants: List[Plant], filename: str = "sensor_datas.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
+    def export_sensor_datas_csv(
+            plants: List[Plant],
+            output_dir: str | Path,
+            filename: str = "sensor_datas.csv"
+    ):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        filepath = output_dir / filename
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+
             writer.writerow([
                 "PlantMAC", "Temperature", "AirHumidity",
                 "SoilHumidity", "LightIntensity", "Timestamp",
             ])
+
             for plant in plants:
                 for r in plant.sensors:
                     writer.writerow([
-                        plant.MAC, r.temperature, r.air_humidity,
-                        r.soil_humidity, r.light_intensity,
+                        plant.MAC,
+                        r.temperature,
+                        r.air_humidity,
+                        r.soil_humidity,
+                        r.light_intensity,
                         r.timestamp.isoformat(),
                     ])
 
+        print(f"Saved: {filepath}")
+
     @staticmethod
-    def export_waterings_csv(plants: List[Plant], filename: str = "waterings.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
+    def export_waterings_csv(
+            plants: List[Plant],
+            output_dir: str | Path,
+            filename: str = "waterings.csv"
+    ):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        filepath = output_dir / filename
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+
             writer.writerow([
-                "PlantMAC", "PredictedFutureWaterTime",
-                "LastWaterTime", "WaterLevel", "PumpTimeInSeconds",
+                "PlantMAC",
+                "PredictedFutureWaterTime",
+                "LastWaterTime",
+                "WaterLevel",
+                "PumpTimeInSeconds",
             ])
+
             for plant in plants:
                 for w in plant.waterings:
                     writer.writerow([
@@ -580,26 +628,35 @@ class PlantDataGenerator:
                         w.pump_time_in_seconds,
                     ])
 
+        print(f"Saved: {filepath}")
+
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
-def main():
-    random.seed(42)
-
-    generator = PlantDataGenerator(
-        plants_per_user=3,
+def main(plants_per_user=3,
         readings_per_plant=10_000,
         days_of_data=365,
         waterings_per_plant=1_000,
         watering_threshold_percent=0.70,
+
+         output_dir="/workspace/datapreparation/mockdata",):
+
+    random.seed(42)
+
+    generator = PlantDataGenerator(
+        plants_per_user,
+        readings_per_plant,
+        days_of_data,
+        waterings_per_plant,
+        watering_threshold_percent,
     )
 
     plants = generator.generate_all_plants()
 
-    generator.export_plants_csv(plants, "plants.csv")
-    generator.export_sensor_datas_csv(plants, "sensor_datas.csv")
-    generator.export_waterings_csv(plants, "waterings.csv")
+    generator.export_plants_csv(plants, output_dir)
+    generator.export_sensor_datas_csv(plants, output_dir)
+    generator.export_waterings_csv(plants, output_dir)
 
     print(f"Generated {len(plants)} plants.")
     total_readings  = sum(len(p.sensors)   for p in plants)
