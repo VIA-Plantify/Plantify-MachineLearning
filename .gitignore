@@ -179,3 +179,11 @@ cython_debug/
 /datapreparation/irrigation_prediction.csv
 /models/xgb_model.ubj
 /datapreparation/plant_health_data.csv
+/-Body
+/-ContentType
+/-Uri
+/catch
+/Invoke-RestMethod
+/datapreparation/indoor_dataset/light_intensity.csv
+/try
+/}
