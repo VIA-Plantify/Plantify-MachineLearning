@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 import random
 import csv
 import math
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -45,57 +46,68 @@ class Plant:
 
 
 # ---------------------------------------------------------------------------
-# Plant Profiles (same as before)
+# Plant Profiles with Bias and Trigger Sensitivity
 # ---------------------------------------------------------------------------
 PLANT_PROFILES = {
-    "Monstera": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (60, 75), "light_range": (1000, 2500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.8},
-    "Pothos": {"temp_range": (15, 29), "air_hum_range": (50, 70), "soil_hum_range": (50, 65), "light_range": (150, 1500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.5},
-    "Snake Plant": {"temp_range": (16, 27), "air_hum_range": (30, 50), "soil_hum_range": (30, 50), "light_range": (100, 1000), "watering_interval": (14, 42), "pump_sec_per_pct": 1.0},
-    "Fiddle Leaf Fig": {"temp_range": (15, 24), "air_hum_range": (50, 60), "soil_hum_range": (55, 70), "light_range": (1000, 3000), "watering_interval": (7, 14), "pump_sec_per_pct": 2.0},
-    "ZZ Plant": {"temp_range": (18, 26), "air_hum_range": (40, 50), "soil_hum_range": (35, 55), "light_range": (100, 800), "watering_interval": (14, 28), "pump_sec_per_pct": 1.0},
-    "Rubber Plant": {"temp_range": (15, 24), "air_hum_range": (40, 60), "soil_hum_range": (50, 65), "light_range": (800, 2000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.6},
-    "Peace Lily": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (65, 80), "light_range": (250, 1000), "watering_interval": (5, 10), "pump_sec_per_pct": 2.0},
-    "Philodendron": {"temp_range": (18, 27), "air_hum_range": (60, 70), "soil_hum_range": (55, 70), "light_range": (500, 1500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.7},
-    "Calathea": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (60, 75), "light_range": (500, 1000), "watering_interval": (7, 12), "pump_sec_per_pct": 1.8},
-    "Dracaena": {"temp_range": (18, 26), "air_hum_range": (40, 60), "soil_hum_range": (40, 60), "light_range": (300, 1200), "watering_interval": (7, 21), "pump_sec_per_pct": 1.4},
-    "Spider Plant": {"temp_range": (13, 27), "air_hum_range": (40, 60), "soil_hum_range": (50, 65), "light_range": (500, 2000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.5},
-    "Boston Fern": {"temp_range": (15, 24), "air_hum_range": (60, 80), "soil_hum_range": (65, 80), "light_range": (500, 1500), "watering_interval": (3, 7), "pump_sec_per_pct": 2.2},
-    "Succulent": {"temp_range": (15, 29), "air_hum_range": (20, 40), "soil_hum_range": (15, 35), "light_range": (2000, 10000), "watering_interval": (14, 28), "pump_sec_per_pct": 0.7},
-    "Cactus": {"temp_range": (18, 30), "air_hum_range": (10, 30), "soil_hum_range": (10, 25), "light_range": (5000, 10000), "watering_interval": (21, 42), "pump_sec_per_pct": 0.5},
-    "Orchid": {"temp_range": (18, 24), "air_hum_range": (50, 70), "soil_hum_range": (40, 60), "light_range": (1000, 3000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.3},
+    "Monstera": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (60, 75),
+                 "light_range": (1000, 2500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.8,
+                 "soil_sensor_bias": 8.0, "trigger_sensitivity": 0.75},
+    "Pothos": {"temp_range": (15, 29), "air_hum_range": (50, 70), "soil_hum_range": (50, 65),
+               "light_range": (150, 1500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.5,
+               "soil_sensor_bias": 6.0, "trigger_sensitivity": 0.70},
+    "Snake Plant": {"temp_range": (16, 27), "air_hum_range": (30, 50), "soil_hum_range": (30, 50),
+                    "light_range": (100, 1000), "watering_interval": (14, 42), "pump_sec_per_pct": 1.0,
+                    "soil_sensor_bias": 4.0, "trigger_sensitivity": 0.45},
+    "Fiddle Leaf Fig": {"temp_range": (15, 24), "air_hum_range": (50, 60), "soil_hum_range": (55, 70),
+                        "light_range": (1000, 3000), "watering_interval": (7, 14), "pump_sec_per_pct": 2.0,
+                        "soil_sensor_bias": 10.0, "trigger_sensitivity": 0.80},
+    "ZZ Plant": {"temp_range": (18, 26), "air_hum_range": (40, 50), "soil_hum_range": (35, 55),
+                 "light_range": (100, 800), "watering_interval": (14, 28), "pump_sec_per_pct": 1.0,
+                 "soil_sensor_bias": 5.0, "trigger_sensitivity": 0.50},
+    "Rubber Plant": {"temp_range": (15, 24), "air_hum_range": (40, 60), "soil_hum_range": (50, 65),
+                     "light_range": (800, 2000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.6,
+                     "soil_sensor_bias": 7.0, "trigger_sensitivity": 0.65},
+    "Peace Lily": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (65, 80),
+                   "light_range": (250, 1000), "watering_interval": (5, 10), "pump_sec_per_pct": 2.0,
+                   "soil_sensor_bias": 11.0, "trigger_sensitivity": 0.85},
+    "Philodendron": {"temp_range": (18, 27), "air_hum_range": (60, 70), "soil_hum_range": (55, 70),
+                     "light_range": (500, 1500), "watering_interval": (7, 14), "pump_sec_per_pct": 1.7,
+                     "soil_sensor_bias": 9.0, "trigger_sensitivity": 0.75},
+    "Calathea": {"temp_range": (18, 27), "air_hum_range": (60, 80), "soil_hum_range": (60, 75),
+                 "light_range": (500, 1000), "watering_interval": (7, 12), "pump_sec_per_pct": 1.8,
+                 "soil_sensor_bias": 12.0, "trigger_sensitivity": 0.80},
+    "Dracaena": {"temp_range": (18, 26), "air_hum_range": (40, 60), "soil_hum_range": (40, 60),
+                 "light_range": (300, 1200), "watering_interval": (7, 21), "pump_sec_per_pct": 1.4,
+                 "soil_sensor_bias": 6.0, "trigger_sensitivity": 0.60},
+    "Spider Plant": {"temp_range": (13, 27), "air_hum_range": (40, 60), "soil_hum_range": (50, 65),
+                     "light_range": (500, 2000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.5,
+                     "soil_sensor_bias": 7.0, "trigger_sensitivity": 0.70},
+    "Boston Fern": {"temp_range": (15, 24), "air_hum_range": (60, 80), "soil_hum_range": (65, 80),
+                    "light_range": (500, 1500), "watering_interval": (3, 7), "pump_sec_per_pct": 2.2,
+                    "soil_sensor_bias": 13.0, "trigger_sensitivity": 0.90},
+    "Succulent": {"temp_range": (15, 29), "air_hum_range": (20, 40), "soil_hum_range": (15, 35),
+                  "light_range": (2000, 10000), "watering_interval": (14, 28), "pump_sec_per_pct": 0.7,
+                  "soil_sensor_bias": 3.0, "trigger_sensitivity": 0.40},
+    "Cactus": {"temp_range": (18, 30), "air_hum_range": (10, 30), "soil_hum_range": (10, 25),
+               "light_range": (5000, 10000), "watering_interval": (21, 42), "pump_sec_per_pct": 0.5,
+               "soil_sensor_bias": 2.0, "trigger_sensitivity": 0.35},
+    "Orchid": {"temp_range": (18, 24), "air_hum_range": (50, 70), "soil_hum_range": (40, 60),
+               "light_range": (1000, 3000), "watering_interval": (7, 14), "pump_sec_per_pct": 1.3,
+               "soil_sensor_bias": 8.0, "trigger_sensitivity": 0.65},
 }
 
 
 class PlantDataGenerator:
-    PLANT_NAMES = list(PLANT_PROFILES.keys())
-
-    def __init__(
-            self,
-            plants_per_user: int = 1,
-            readings_per_plant: int = 100,
-            days_of_data: int = 30,
-            waterings_per_plant: int = 10,
-            watering_threshold_percent: float = 0.85,
-            # Updated NULL settings
-            base_null_probability: float = 0.12,      # 12% base rate
-            max_null_probability: float = 0.20,       # can spike up to 20%
-    ):
-        self.watering_threshold_percent = watering_threshold_percent
+    def __init__(self, plants_per_user=1, readings_per_plant=100, watering_threshold_percent=0.85,
+                 base_null_prob=0.08, max_null_prob=0.25):
         self.plants_per_user = plants_per_user
         self.readings_per_plant = readings_per_plant
-        self.days_of_data = days_of_data
-        self.waterings_per_plant = waterings_per_plant
+        self.watering_threshold_percent = watering_threshold_percent
+        self.base_null_prob = base_null_prob
+        self.max_null_prob = max_null_prob
         self.base_timestamp = datetime(2025, 1, 1, 12, 0, 0)
+        self.PLANT_NAMES = list(PLANT_PROFILES.keys())
 
-        self.base_null_probability = base_null_probability
-        self.max_null_probability = max_null_probability
-
-        self._stuck_until = None
-        self._stuck_values = None
-
-    # ------------------------------------------------------------------
-    # Helpers (unchanged)
-    # ------------------------------------------------------------------
     def generate_users(self) -> List[str]:
         return ["janedoe", "Mario", "Carolina", "Patrik", "Teo"]
 
@@ -105,13 +117,12 @@ class PlantDataGenerator:
     def generate_plant_optimal_values(self, plant_name: str) -> dict:
         p = PLANT_PROFILES[plant_name]
 
-        def mid_jitter(lo, hi, jitter_frac=0.08):
+        def mid_jitter(lo, hi):
             mid = (lo + hi) / 2
-            half = (hi - lo) / 2
-            raw = mid + random.gauss(0, half * jitter_frac)
-            return round(max(lo, min(hi, raw)), 1)
+            return round(mid + random.gauss(0, (hi - lo) * 0.08), 1)
 
         return {
+            "name": plant_name,
             "optimal_temperature": mid_jitter(*p["temp_range"]),
             "optimal_air_humidity": mid_jitter(*p["air_hum_range"]),
             "optimal_soil_humidity": mid_jitter(*p["soil_hum_range"]),
@@ -119,266 +130,107 @@ class PlantDataGenerator:
             "_profile": p,
         }
 
-    @staticmethod
-    def _et_pump_multiplier(reading: Sensor, optimal_values: dict) -> float:
-        if reading.soil_humidity is None:
-            return 1.0
-        T = reading.temperature or 22.0
-        RH = reading.air_humidity or 60.0
-        Lux = reading.light_intensity or 800.0
-
-        T_term = max(0.7, min(1.3, 1.0 + 0.02 * (T - 22)))
-        RH_term = max(0.7, min(1.3, 1.0 + 0.012 * (60 - RH)))
-        light_norm = (Lux - 800) / 2000.0
-        Rn_term = max(0.7, min(1.3, 1.0 + 0.3 * light_norm))
-
-        soil_stress = 1.0 if (reading.soil_humidity or 50) >= 20 else 0.7
-        multiplier = ((T_term + RH_term + Rn_term) / 3.0) * soil_stress
-        return round(max(0.5, min(2.5, multiplier)), 4)
-
-    # ------------------------------------------------------------------
-    # Sensor Readings with Higher & Variable NULLs
-    # ------------------------------------------------------------------
-    def generate_sensor_readings(self, plant_mac: str, optimal_values: dict) -> List[Sensor]:
-        profile = optimal_values["_profile"]
-        readings = []
-
-        soil = optimal_values["optimal_soil_humidity"]
-        last_valid_temp = optimal_values["optimal_temperature"]
-        last_valid_air = optimal_values["optimal_air_humidity"]
-        last_valid_soil = soil
-        last_valid_light = sum(profile["light_range"]) / 2
-
-        self._stuck_until = None
-        self._stuck_values = None
-
-        # Occasional "bad period" where nulls spike
+    def generate_sensor_readings(self, plant_mac: str, opt: dict, w_times: list = None) -> List[Sensor]:
+        profile, bias = opt["_profile"], opt["_profile"]["soil_sensor_bias"]
+        readings, gt_soil = [], opt["optimal_soil_humidity"]
+        w_set = {ts.replace(minute=0, second=0, microsecond=0) for ts in (w_times or [])}
         bad_period_end = None
 
         for i in range(self.readings_per_plant):
-            ts = self.base_timestamp + timedelta(hours=i * 2)
-            hour = ts.hour
-            day_of_year = ts.timetuple().tm_yday
+            ts = self.base_timestamp + timedelta(hours=i)
+            if ts.replace(minute=0, second=0, microsecond=0) in w_set:
+                gt_soil = opt["optimal_soil_humidity"] + random.uniform(-1, 1)
 
-            # === Base values (same logic) ===
-            if 6 <= hour <= 20:
-                angle = math.pi * (hour - 6) / 14
-                light = max(0.0, profile["light_range"][0] +
-                           (profile["light_range"][1] - profile["light_range"][0]) *
-                           math.sin(angle) * random.triangular(0.35, 1.0, 0.82))
-            else:
-                light = max(0.0, random.gauss(5, 25))
+            # Physics logic
+            h = ts.hour
+            seasonal = 2.0 * math.cos(2 * math.pi * (ts.timetuple().tm_yday - 196) / 365)
+            diurnal = 1.5 * math.sin(2 * math.pi * (h - 5) / 24)
+            gt_temp = opt["optimal_temperature"] + seasonal + diurnal + random.gauss(0, 0.5)
+            gt_air_hum = max(0, min(100, opt["optimal_air_humidity"] - (gt_temp - opt["optimal_temperature"]) * 0.8))
+            gt_light = profile["light_range"][0] + (profile["light_range"][1] - profile["light_range"][0]) * math.sin(
+                math.pi * (h - 6) / 14) if 6 <= h <= 20 else 2.0
+            gt_soil = max(5.0, gt_soil - (gt_soil * 0.0004 * max(0.1, (gt_temp - 15) / 10)))
 
-            seasonal = 2.0 * math.cos(2 * math.pi * (day_of_year - 196) / 365)
-            diurnal_temp = 1.6 * math.sin(2 * math.pi * (hour - 5) / 24)
-            temp = optimal_values["optimal_temperature"] + seasonal + diurnal_temp + random.gauss(0, 0.6)
 
-            air_hum = optimal_values["optimal_air_humidity"] - (temp - optimal_values["optimal_temperature"]) * 0.85 + random.gauss(0, 2.8)
+            def poll(val, p):
+                if random.random() < p: return None  # This injects the NULL
+                if random.random() < 0.01: return val * random.choice([0.2, 2.0])  # Spike
+                return round(val + random.gauss(0, val * 0.015), 2)
 
-            et_rate = (0.006 * max(0, temp - 18) + 0.0022 * (light / 1000) + 0.002 * max(0, 60 - air_hum))
-            soil = max(profile["soil_hum_range"][0] - 6, soil - et_rate + random.gauss(0, 0.35))
+            if bad_period_end is None and random.random() < 0.005: bad_period_end = i + random.randint(6, 24)
+            cur_p = self.max_null_prob if (bad_period_end and i < bad_period_end) else self.base_null_prob
+            if bad_period_end and i >= bad_period_end: bad_period_end = None
 
-            temp = max(-5, min(45, temp))
-            air_hum = max(5, min(100, air_hum))
-            soil = max(0, min(100, soil))
-            light = max(0, light)
-
-            # === NULL Rate Logic ===
-            if bad_period_end is None and random.random() < 0.008:   # start bad period
-                bad_period_end = i + random.randint(30, 120)         # 60h to 10 days of higher failures
-
-            if bad_period_end and i < bad_period_end:
-                current_null_prob = self.max_null_probability
-            else:
-                current_null_prob = self.base_null_probability
-                if bad_period_end and i >= bad_period_end:
-                    bad_period_end = None
-
-            # Full failure
-            if random.random() < 0.0015:
-                readings.append(Sensor(plant_mac, None, None, None, None, ts))
-                continue
-
-            # Stuck sensor logic (unchanged)
-            if self._stuck_until is None and random.random() < 0.003:
-                self._stuck_until = ts + timedelta(hours=random.randint(8, 40))
-                self._stuck_values = {
-                    'temp': round(last_valid_temp + random.gauss(0, 1.5), 2),
-                    'air': round(last_valid_air + random.gauss(0, 3), 2),
-                    'soil': round(last_valid_soil, 2),
-                    'light': round(last_valid_light, 2)
-                }
-
-            if self._stuck_until and ts < self._stuck_until:
-                temp = self._stuck_values['temp']
-                air_hum = self._stuck_values['air']
-                soil = self._stuck_values['soil']
-                light = self._stuck_values['light']
-            else:
-                self._stuck_until = None
-
-            # Misreadings
-            if random.random() < 0.012:
-                st = random.choice(['temp', 'air', 'soil', 'light'])
-                if st == 'temp': temp += random.choice([-12, -8, 9, 15]) + random.gauss(0, 3)
-                elif st == 'air': air_hum += random.choice([-25, 22, -18])
-                elif st == 'soil': soil += random.choice([-35, 28, -22])
-                else: light = light * random.uniform(0.1, 3.5) + random.gauss(0, 400)
-
-            # Apply NULLs with current probability
-            temperature = round(temp, 2) if random.random() >= current_null_prob else None
-            air_humidity = round(air_hum, 2) if random.random() >= current_null_prob else None
-            soil_humidity = round(soil, 2) if random.random() >= current_null_prob * 0.6 else None  # soil more reliable
-            light_intensity = round(light, 2) if random.random() >= current_null_prob else None
-
-            # Update last valid readings
-            if temperature is not None: last_valid_temp = temperature
-            if air_humidity is not None: last_valid_air = air_humidity
-            if soil_humidity is not None: last_valid_soil = soil_humidity
-            if light_intensity is not None: last_valid_light = light_intensity
-
-            readings.append(Sensor(plant_mac, temperature, air_humidity, soil_humidity, light_intensity, ts))
-
+            readings.append(Sensor(plant_mac, poll(gt_temp, cur_p), poll(gt_air_hum, cur_p),
+                                   poll(gt_soil + bias, cur_p * 0.5), poll(gt_light, cur_p), ts))
         return readings
 
-    # ------------------------------------------------------------------
-    # Rest of the class (generate_waterings, generate_plant, exports, main)
-    # ------------------------------------------------------------------
-    def generate_waterings(self, plant_mac: str, sensor_readings: List[Sensor], optimal_values: dict) -> List[Watering]:
-        profile = optimal_values["_profile"]
-        optimal_soil = optimal_values["optimal_soil_humidity"]
-        pump_sec_per_pct = profile["pump_sec_per_pct"]
+    def generate_waterings(self, plant_mac: str, sensors: List[Sensor], opt: dict) -> List[Watering]:
+        profile, opt_s, bias = opt["_profile"], opt["optimal_soil_humidity"], opt["_profile"]["soil_sensor_bias"]
+        waterings, last_w, last_c = [], sensors[0].timestamp - timedelta(days=10), sensors[0].timestamp - timedelta(
+            hours=25)
+        sim_soil = opt_s + bias
 
-        waterings = []
-        last_watered_at = sensor_readings[0].timestamp
+        for r in sensors:
+            if r.soil_humidity is not None: sim_soil = 0.8 * r.soil_humidity + 0.2 * sim_soil
+            if (r.timestamp - last_c).total_seconds() / 3600 < 24: continue
 
-        min_hours_between = max(48.0, profile["watering_interval"][0] * 20)
-        max_hours_between = profile["watering_interval"][1] * 26
-
-        waterings.append(Watering(
-            plant_mac=plant_mac,
-            last_water_time=sensor_readings[0].timestamp,
-            predicted_future_water_time=sensor_readings[0].timestamp + timedelta(hours=random.uniform(120, 400)),
-            water_level=round(random.uniform(82, 100), 2),
-            pump_time_in_seconds=0.0,
-        ))
-
-        last_watered_at = sensor_readings[0].timestamp
-
-        for reading in sensor_readings[1:]:
-            hours_since = (reading.timestamp - last_watered_at).total_seconds() / 3600.0
-            soil_val = reading.soil_humidity if reading.soil_humidity is not None else optimal_soil
-
-            if hours_since >= min_hours_between and (soil_val <= optimal_soil * self.watering_threshold_percent or
-                                                     soil_val < max(20, optimal_soil * 0.35)):
-                deficit = max(0.0, optimal_soil - soil_val)
-                et_mult = self._et_pump_multiplier(reading, optimal_values)
-
-                outlier = random.choice([0.35, 0.55, 1.65, 2.3, 3.0]) if random.random() < 0.15 else 1.0
-                pump_time = max(6.0, (deficit * pump_sec_per_pct * 1.1) * et_mult * outlier)
-                pump_time = round(pump_time + random.gauss(0, pump_time * 0.18), 1)
-
-                days_total = (reading.timestamp - self.base_timestamp).days
-                water_level = max(6.0, 100 - days_total * random.uniform(0.1, 0.25))
-                if random.random() < 0.18:
-                    water_level = random.uniform(78, 100)
-
-                waterings.append(Watering(
-                    plant_mac=plant_mac,
-                    last_water_time=reading.timestamp,
-                    predicted_future_water_time=reading.timestamp + timedelta(hours=random.uniform(min_hours_between * 0.9, max_hours_between)),
-                    water_level=round(water_level, 2),
-                    pump_time_in_seconds=pump_time,
-                ))
-                last_watered_at = reading.timestamp
-
-        print(f"Plant {plant_mac[-8:]} → Generated {len(waterings)} waterings")
+            last_c = r.timestamp
+            true_est = sim_soil - bias
+            if true_est <= opt_s * profile.get("trigger_sensitivity", self.watering_threshold_percent):
+                raw_p = (max(0, opt_s - true_est) * profile["pump_sec_per_pct"])
+                if raw_p >= 2.0:  # 2s Floor
+                    p_time = round(raw_p * random.uniform(0.9, 1.1), 1)
+                    sim_soil = (opt_s + bias) + random.uniform(-1, 1)
+                    last_w = r.timestamp
+                    waterings.append(
+                        Watering(plant_mac, last_w, r.timestamp + timedelta(days=7), round(random.uniform(20, 100), 2),
+                                 p_time))
         return waterings
 
-    def generate_plant(self, username: str) -> Plant:
-        name = random.choice(self.PLANT_NAMES)
-        optimal_values = self.generate_plant_optimal_values(name)
-        mac = self.generate_mac_address()
-        sensor_readings = self.generate_sensor_readings(mac, optimal_values)
-        waterings = self.generate_waterings(mac, sensor_readings, optimal_values)
-
-        return Plant(
-            MAC=mac,
-            username=username,
-            optimal_temperature=optimal_values["optimal_temperature"],
-            optimal_air_humidity=optimal_values["optimal_air_humidity"],
-            optimal_soil_humidity=optimal_values["optimal_soil_humidity"],
-            optimal_light_intensity=optimal_values["optimal_light_intensity"],
-            sensors=sensor_readings,
-            waterings=waterings,
-            name=name,
-        )
-
-    def generate_all_plants(self) -> List[Plant]:
+    def generate_all(self) -> List[Plant]:
         plants = []
-        for username in self.generate_users():
+        for user in self.generate_users():
             for _ in range(self.plants_per_user):
-                plants.append(self.generate_plant(username))
+                opt = self.generate_plant_optimal_values(random.choice(self.PLANT_NAMES))
+                mac = self.generate_mac_address()
+                s_init = self.generate_sensor_readings(mac, opt)
+                waters = self.generate_waterings(mac, s_init, opt)
+                w_ts = [w.last_water_time for w in waters]
+                plants.append(Plant(mac, user, opt["optimal_temperature"], opt["optimal_air_humidity"],
+                                    opt["optimal_soil_humidity"], opt["optimal_light_intensity"],
+                                    self.generate_sensor_readings(mac, opt, w_ts), waters, opt["name"]))
         return plants
 
-    # CSV Export methods (same as previous version)
     @staticmethod
-    def export_plants_csv(plants: List[Plant], filename: str = "plants.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["MAC", "Name", "Username", "OptimalTemperature", "OptimalAirHumidity", "OptimalSoilHumidity", "OptimalLightIntensity"])
-            for plant in plants:
-                writer.writerow([plant.MAC, plant.name, plant.username, plant.optimal_temperature, plant.optimal_air_humidity, plant.optimal_soil_humidity, plant.optimal_light_intensity])
-
-    @staticmethod
-    def export_sensor_datas_csv(plants: List[Plant], filename: str = "sensor_datas.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["PlantMAC", "Temperature", "AirHumidity", "SoilHumidity", "LightIntensity", "Timestamp"])
-            for plant in plants:
-                for r in plant.sensors:
-                    writer.writerow([plant.MAC, r.temperature, r.air_humidity, r.soil_humidity, r.light_intensity, r.timestamp.isoformat()])
-
-    @staticmethod
-    def export_waterings_csv(plants: List[Plant], filename: str = "waterings.csv"):
-        with open(filename, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["PlantMAC", "PredictedFutureWaterTime", "LastWaterTime", "WaterLevel", "PumpTimeInSeconds"])
-            for plant in plants:
-                for w in plant.waterings:
-                    writer.writerow([plant.MAC, w.predicted_future_water_time.isoformat(), w.last_water_time.isoformat(), w.water_level, w.pump_time_in_seconds])
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-def main(plants_per_user=3,
-        readings_per_plant=10_000,
-        days_of_data=365,
-        waterings_per_plant=1_000,
-        watering_threshold_percent=0.70,):
-    random.seed(42)
-
-    generator = PlantDataGenerator(
-        plants_per_user,
-        readings_per_plant,
-        days_of_data,
-        waterings_per_plant,
-        watering_threshold_percent,
-    )
-
-    plants = generator.generate_all_plants()
-
-    generator.export_plants_csv(plants, "plants.csv")
-    generator.export_sensor_datas_csv(plants, "sensor_datas.csv")
-    generator.export_waterings_csv(plants, "waterings.csv")
-
-    print(f"Generated {len(plants)} plants.")
-    total_readings = sum(len(p.sensors) for p in plants)
-    total_waterings = sum(len(p.waterings) for p in plants)
-    print(f"  Sensor readings : {total_readings:,}")
-    print(f"  Watering events : {total_waterings:,}")
+    def export(plants: List[Plant], path: Path):
+        path.mkdir(parents=True, exist_ok=True)
+        # Export Plants
+        with open(path / "plants.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["MAC", "Name", "Username", "OptTemp", "OptAir", "OptSoil", "OptLight"])
+            for p in plants: w.writerow(
+                [p.MAC, p.name, p.username, p.optimal_temperature, p.optimal_air_humidity, p.optimal_soil_humidity,
+                 p.optimal_light_intensity])
+        # Export Sensors
+        with open(path / "sensor_datas.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["PlantMAC", "Temp", "AirHum", "SoilHum", "Light", "Timestamp"])
+            for p in plants:
+                for r in p.sensors: w.writerow(
+                    [p.MAC, r.temperature, r.air_humidity, r.soil_humidity, r.light_intensity, r.timestamp.isoformat()])
+        # Export Waterings
+        with open(path / "waterings.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["PlantMAC", "PredTime", "LastTime", "Level", "PumpSec"])
+            for p in plants:
+                for wt in p.waterings: w.writerow(
+                    [p.MAC, wt.predicted_future_water_time.isoformat(), wt.last_water_time.isoformat(), wt.water_level,
+                     wt.pump_time_in_seconds])
 
 
 if __name__ == "__main__":
-    main()
+    gen = PlantDataGenerator(plants_per_user=3, readings_per_plant=10000)
+    data = gen.generate_all()
+    gen.export(data, Path("./mock_data"))
+    print("Done! Check for empty fields in CSVs—those are your Nulls.")

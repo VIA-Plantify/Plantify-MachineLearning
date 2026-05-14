@@ -42,6 +42,47 @@ def prepare_input(temperature, air_humidity, soil_humidity, light_intensity,
     df = pd.DataFrame([features])
     return df[model.feature_names_in_]
 
+# =================================================================
+# HIGH-DEMAND & EXTREME DEFICIT TEST CASES
+# =================================================================
+
+extreme_synthetic_cases = [
+    # 1. THE "DESERT TO JUNGLE" (Max Deficit + Max Heat + High Optimal)
+    # Plant needs 80% soil, but has 5%. Temp is 40C.
+    prepare_input(40.0, 15.0, 5.0, 1023, "2026-05-14 14:00", "2026-04-14 10:00", 25.0, 60.0, 85.0, 900),
+
+    # 2. THE "B thirsty" (Large Boston Fern in a dry room)
+    # High soil humidity requirement (80%) currently at 10%.
+    prepare_input(28.0, 20.0, 10.0, 800, "2026-05-14 12:00", "2026-05-01 10:00", 22.0, 75.0, 80.0, 700),
+
+    # 3. THE "BONE DRY MONSTERA" (Massive soil deficit)
+    # Optimal is 75%, current is 8%.
+    prepare_input(30.0, 30.0, 8.0, 950, "2026-05-14 15:00", "2026-04-20 10:00", 24.0, 65.0, 75.0, 850),
+
+    # 4. HIGH EVAPOTRANSPIRATION (Hot, Windy, Bright)
+    # Even if soil isn't at 0, the deviation and ET approximation are maxed out.
+    prepare_input(42.0, 10.0, 20.0, 1023, "2026-06-01 13:00", "2026-05-25 10:00", 22.0, 55.0, 70.0, 600),
+
+    # 5. LARGE POT SIMULATION (High Optimal Soil + Deep Deficit)
+    # If the model learned that soil_deficit * OptimalSoil is a feature, this should trigger a high value.
+    prepare_input(25.0, 45.0, 15.0, 500, "2026-05-14 10:00", "2026-04-01 10:00", 22.0, 55.0, 90.0, 600),
+]
+
+extreme_labels = [
+    "Extreme Desert Drought",
+    "Thirsty Fern (Deep Deficit)",
+    "Bone Dry Monstera",
+    "Max ET / Heat Wave",
+    "Large Pot / Max Deficit"
+]
+
+print("\n" + "#" * 60)
+print("EXTREME TEST CASES - Testing for High Pump Times")
+print("#" * 60 + "\n")
+
+for label, case in zip(extreme_labels, extreme_synthetic_cases):
+    pred = model.predict(case)[0]
+    print(f"{label:30s}: Pump runtime = {pred:7.2f} seconds")
 
 print("=" * 60)
 print("SYNTHETIC TEST CASES - Model Predictions")
@@ -55,16 +96,16 @@ cases = [
     prepare_input(35, 15, 10, 1000, "2025-01-15 10:00", "2025-01-01 10:00", 22, 55, 40, 650),
     prepare_input(22, 55, 40, 650, "2025-01-04 10:00", "2025-01-01 10:00", 22, 55, 40, 650),
     prepare_input(19, 58, 38, 0, "2025-01-05 02:00", "2025-01-03 10:00", 22, 55, 40, 650),
-    prepare_input(26, 30, 18, 4000, "2025-01-20 10:00", "2025-01-01 10:00", 24, 30, 25, 5000),
-    prepare_input(20, 70, 50, 800, "2025-01-06 10:00", "2025-01-01 10:00", 20, 70, 72, 1000),
-    prepare_input(28, 20, 12, 7000, "2025-01-22 10:00", "2025-01-01 10:00", 25, 20, 18, 7500),
+    prepare_input(26, 30, 18, 850, "2025-01-20 10:00", "2025-01-01 10:00", 24, 30, 25, 800), # Succulent
+    prepare_input(20, 70, 50, 800, "2025-01-06 10:00", "2025-01-01 10:00", 20, 70, 72, 950), # Boston Fern
+    prepare_input(28, 20, 12, 1020, "2025-01-22 10:00", "2025-01-01 10:00", 25, 20, 18, 1000), # Cactus
     prepare_input(22, 55, 90, 600, "2025-01-02 10:00", "2025-01-01 10:00", 22, 55, 40, 650),
 
     # Stress conditions
-    prepare_input(35, 15, 8, 7000, "2025-01-25 14:00", "2024-12-25 10:00", 25, 20, 18, 7500),
-    prepare_input(26, 85, 75, 1200, "2025-01-10 10:00", "2025-01-08 10:00", 24, 75, 70, 1500),
+    prepare_input(35, 15, 8, 1023, "2025-01-25 14:00", "2024-12-25 10:00", 25, 20, 18, 1000),
+    prepare_input(26, 85, 75, 800, "2025-01-10 10:00", "2025-01-08 10:00", 24, 75, 70, 900),
     prepare_input(5, 45, 28, 200, "2025-01-15 08:00", "2025-01-10 10:00", 22, 55, 40, 650),
-    prepare_input(40, 20, 15, 8000, "2025-07-20 16:00", "2025-07-10 10:00", 22, 55, 40, 650),
+    prepare_input(40, 20, 15, 1023, "2025-07-20 16:00", "2025-07-10 10:00", 22, 55, 40, 650),
 
     # Watering schedules
     prepare_input(23, 52, 82, 700, "2025-01-11 10:00", "2025-01-11 09:00", 22, 55, 40, 650),
@@ -75,21 +116,21 @@ cases = [
     # Plant-specific profiles
     prepare_input(23, 65, 48, 500, "2025-01-10 10:00", "2025-01-08 10:00", 23, 65, 50, 800),
     prepare_input(22, 50, 42, 250, "2025-01-10 10:00", "2025-01-07 10:00", 21, 50, 40, 400),
-    prepare_input(26, 35, 25, 1000, "2025-01-20 10:00", "2025-01-05 10:00", 24, 35, 20, 1200),
-    prepare_input(28, 25, 15, 3000, "2025-01-30 10:00", "2025-01-01 10:00", 25, 25, 15, 3500),
+    prepare_input(26, 35, 25, 900, "2025-01-20 10:00", "2025-01-05 10:00", 24, 35, 20, 950),
+    prepare_input(28, 25, 15, 950, "2025-01-30 10:00", "2025-01-01 10:00", 25, 25, 15, 1000),
     prepare_input(21, 68, 55, 400, "2025-01-08 10:00", "2025-01-05 10:00", 21, 70, 60, 600),
     prepare_input(22, 72, 60, 600, "2025-01-09 10:00", "2025-01-06 10:00", 22, 75, 65, 800),
 
     # Seasonal variations
     prepare_input(18, 48, 35, 300, "2025-01-15 10:00", "2025-01-08 10:00", 22, 55, 40, 650),
     prepare_input(20, 52, 38, 800, "2025-03-15 10:00", "2025-03-08 10:00", 22, 55, 40, 650),
-    prepare_input(30, 45, 28, 2000, "2025-07-15 14:00", "2025-07-08 10:00", 22, 55, 40, 650),
+    prepare_input(30, 45, 28, 1000, "2025-07-15 14:00", "2025-07-08 10:00", 22, 55, 40, 650),
     prepare_input(22, 55, 42, 900, "2025-10-15 10:00", "2025-10-08 10:00", 22, 55, 40, 650),
 
     # Time-of-day variations
     prepare_input(18, 62, 48, 100, "2025-01-10 06:00", "2025-01-08 10:00", 22, 55, 40, 650),
-    prepare_input(28, 35, 32, 2500, "2025-01-10 12:00", "2025-01-08 10:00", 22, 55, 40, 650),
-    prepare_input(32, 30, 28, 3000, "2025-01-10 16:00", "2025-01-08 10:00", 22, 55, 40, 650),
+    prepare_input(28, 35, 32, 950, "2025-01-10 12:00", "2025-01-08 10:00", 22, 55, 40, 650),
+    prepare_input(32, 30, 28, 1023, "2025-01-10 16:00", "2025-01-08 10:00", 22, 55, 40, 650),
     prepare_input(24, 52, 38, 400, "2025-01-10 18:00", "2025-01-08 10:00", 22, 55, 40, 650),
     prepare_input(19, 70, 52, 0, "2025-01-10 22:00", "2025-01-08 10:00", 22, 55, 40, 650),
 
@@ -97,9 +138,9 @@ cases = [
     prepare_input(25, 40, 5, 800, "2025-01-12 10:00", "2025-01-05 10:00", 22, 55, 40, 650),
     prepare_input(20, 80, 95, 300, "2025-01-08 10:00", "2025-01-07 10:00", 22, 55, 40, 650),
     prepare_input(21, 55, 45, 0, "2025-01-10 10:00", "2025-01-08 10:00", 22, 55, 40, 650),
-    prepare_input(24, 50, 40, 5000, "2025-01-10 10:00", "2025-01-08 10:00", 22, 55, 40, 650),
+    prepare_input(24, 50, 40, 1023, "2025-01-10 10:00", "2025-01-08 10:00", 22, 55, 40, 650),
     prepare_input(10, 50, 42, 600, "2025-01-05 10:00", "2025-01-03 10:00", 22, 55, 40, 650),
-    prepare_input(38, 25, 20, 1500, "2025-01-12 10:00", "2025-01-05 10:00", 22, 55, 40, 650),
+    prepare_input(38, 25, 20, 1023, "2025-01-12 10:00", "2025-01-05 10:00", 22, 55, 40, 650),
 
     # Recovery scenarios
     prepare_input(24, 58, 75, 700, "2025-01-12 10:00", "2025-01-12 09:00", 22, 55, 40, 650),
@@ -109,40 +150,22 @@ cases = [
 ]
 
 labels = [
-    # Basic conditions
     "Dry", "Medium", "Wet", "Very Dry", "At Optimal", "Night",
     "Succulent", "Boston Fern", "Cactus", "Overwatered",
-
-    # Stress conditions
     "Extreme Drought", "Extreme Humidity", "Freezing Cold", "Heat Wave",
-
-    # Watering schedules
     "Just Watered", "1 Week Since Watering", "2 Weeks Since Watering", "3 Weeks - Dry Stress",
-
-    # Plant-specific profiles
     "Monstera - Moderate", "Pothos - Low Light", "Snake Plant - Drought",
     "Jade Plant - Succulent", "Peace Lily - Sensitive", "Calathea - Tropical",
-
-    # Seasonal variations
     "Winter - Dormant", "Spring - Growth", "Summer - Peak Growth", "Fall - Transition",
-
-    # Time-of-day variations
     "Early Morning - Cool", "Noon Peak - Hot", "Afternoon - Max Temp", "Evening - Cooling", "Night - Rest Phase",
-
-    # Edge cases
     "Critical Low Soil", "Waterlogged Root", "Dark Room", "Grow Light - Intense",
     "Temperature - Too Cold", "Temperature - Too Hot",
-
-    # Recovery scenarios
     "Drought Recovery", "Overwater Recovery", "Post-Propagation", "New Location",
 ]
 
-print()
 for label, case in zip(labels, cases):
     pred = model.predict(case)[0]
     print(f"{label:25s}: Pump runtime = {pred:6.2f} seconds")
-
-print("\n Real IOT data next \n")
 
 print("\n" + "=" * 60)
 print("REAL IoT DATA - Model Predictions")
