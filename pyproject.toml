@@ -27,6 +27,9 @@ dependencies = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "kagglehub>=1.0.1",
+    "optuna>=4.8.0",
+    "ipywidgets>=8.1.8",
+    "optuna-integration>=4.8.0",
 ]
 
 [dependency-groups]

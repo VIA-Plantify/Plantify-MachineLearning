@@ -110,8 +110,8 @@ class PlantDataGenerator:
                 )
 
                 # calculate how long the pump should run
-                # minimum 5 seconds
-                pump_time = int(max(5, (optimal_soil - reading.soil_humidity) * 2))
+                # minimum 2 seconds
+                pump_time = int(max(2, (optimal_soil - reading.soil_humidity) * 2))
 
                 # predict next watering time
                 predicted_future_water_time = (
