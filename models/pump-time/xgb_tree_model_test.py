@@ -4,7 +4,7 @@ import pandas as pd
 
 model = xgb.XGBRegressor()
 
-MODEL_PATH = Path(__file__).parent / "xgb_pump_time_regretion_model.ubj"
+MODEL_PATH = Path(__file__).parent / "xgb_tree_model.ubj"
 
 model.load_model(MODEL_PATH)
 
