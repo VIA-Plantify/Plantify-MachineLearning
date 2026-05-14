@@ -138,8 +138,14 @@ class Data_Preparation:
 
 
         return X, y
-    def train_val_test_split_64_16_20(self, func):
+    def train_val_test_split_64_16_20_func(self, func):
         X, y = func()
+        # First split into training and temp (validation + test)
+        X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=0.20, random_state=42)
+        return X_train, X_val,X_test, y_train, y_val, y_test
+    def train_val_test_split_64_16_20(self, df, label):
+        X, y = df, label
         # First split into training and temp (validation + test)
         X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
         X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=0.20, random_state=42)

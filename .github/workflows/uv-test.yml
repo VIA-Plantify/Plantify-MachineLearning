@@ -30,4 +30,4 @@ jobs:
         run: uv run python -m compileall .
       
       - name: Check tests
-        run: uv run pytest
+        run: uv run pytest -vv

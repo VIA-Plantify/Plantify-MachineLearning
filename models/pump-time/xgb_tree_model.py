@@ -2,13 +2,13 @@ from pathlib import Path
 import xgboost as xgb
 import pandas as pd
 
-model = xgb.XGBRegressor()
+MODEL_PATH = Path(__file__).parent / "xgb_tree_model.ubj"
 
-MODEL_PATH = Path(__file__).parent / "xgb_pump_time_regretion_model.ubj"
-
-model.load_model(MODEL_PATH)
-
-
+def load_model():
+    model = xgb.XGBRegressor()
+    model.load_model(MODEL_PATH)
+    return model
+model = load_model()
 def prepare_input(temperature, air_humidity, soil_humidity, light_intensity,
                   sensor_timestamp, last_water_timestamp,
                   optimal_temperature, optimal_air_humidity,
@@ -319,7 +319,9 @@ real_labels = [
     "Early Morning - Full Light Cycle",
 ]
 
+
 for label, case in zip(real_labels, real_cases):
+
     pred = model.predict(case)[0]
     print(f"{label:35s}: Pump runtime = {pred:6.2f} seconds")
 
