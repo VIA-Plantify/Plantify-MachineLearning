@@ -1,0 +1,21 @@
+Plant_ID,Optimal_Room_Temperature_C,Optimal_Humidity_%,Optimal_Soil_Moisture_%
+Aglaonema commutatum,24,60,55
+Aloe vera,24,35,25
+Anthurium andraeanum,25,75,65
+Begonia maculata,23,65,60
+Calathea orbifolia,24,75,70
+Chlorophytum comosum,22,55,50
+Codiaeum variegatum,25,60,55
+Dieffenbachia seguine,24,65,60
+Dracaena trifasciata,23,40,30
+Epipremnum aureum,24,60,55
+Ficus lyrata,24,50,45
+Monstera deliciosa,25,70,65
+Nephrolepis exaltata,22,75,70
+Peperomia obtusifolia,23,50,40
+Philodendron hederaceum,24,65,60
+Sansevieria cylindrica,24,35,25
+Schefflera arboricola,23,50,45
+Spathiphyllum wallisii,24,70,65
+Tradescantia zebrina,23,55,50
+Zamioculcas zamiifolia,24,35,25
