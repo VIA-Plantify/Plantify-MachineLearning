@@ -7,11 +7,16 @@ import pandas as pd
 class PumpTimeModel:
     def __init__(self):
         self.base_path = Path(__file__).parent
+        self.model_path = self.base_path / "pump_time_tree_model.ubj"
+
         self.model = xgb.XGBRegressor()
 
-        # Load the Model
-        # Ensure 'xgb_tree_model.ubj' is in the same folder as this script
-        self.model.load_model(self.base_path / "pump_time_tree_model.ubj")
+        if not self.model_path.exists():
+            raise FileNotFoundError(
+                f"Model file not found: {self.model_path}"
+            )
+
+        self.model.load_model(self.model_path)
 
     def prepare_input(self, temperature, air_humidity, soil_humidity, light_intensity,
                       sensor_timestamp, last_water_timestamp,
