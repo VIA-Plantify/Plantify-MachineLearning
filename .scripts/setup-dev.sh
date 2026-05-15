@@ -34,14 +34,21 @@ echo "Python: $(which python)"
 uv sync
 
 
-echo "Installing PyTorch CUDA..."
-uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+if command -v nvidia-smi &> /dev/null; then
+    echo "GPU detected, installing PyTorch CUDA..."
+    uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+else
+    echo "No GPU detected, installing PyTorch CPU..."
+    uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+fi
 
-echo "Ensuring GPU gradient boosting stack..."
+echo "Installing gradient boosting stack..."
 uv pip install -U xgboost lightgbm catboost
 
 if [ -f "/workspace/.scripts/compile-grpc.sh" ]; then
   bash /workspace/.scripts/compile-grpc.sh
 fi
-
-echo "Setup complete (GPU ML ready)."
+if command -v nvidia-smi &> /dev/null; then
+    echo "Setup complete (GPU ML ready)."
+else
+  echo "Setup complete (CPU ML ready)."
