@@ -10,26 +10,47 @@ ml_model = PumpTimeModel()
 router = APIRouter(prefix="/pumptime", tags=["Pump"])
 
 client = plant_grpc_client()
-
+predictor = PumpTimeModel()
 
 @router.get("/{username}/{plant_MAC}")
-async def get_pump_time(username: str, plant_MAC: str) -> dict:
+async def get_pump_time(username: str, plant_MAC: str):
     try:
-        return await client.get_plant(username=username, plant_MAC =plant_MAC, number_of_readings=0,
-                                            number_of_waterings=0)
-    except RpcError as e:
-        if e.code != StatusCode.NOT_FOUND:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Plants not found for username {username}"
-            )
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "grpc_code": e.code.name,
-                "grpc_details": e.details(),
-            }
+        plant_data = await client.get_plant(
+            username=username,
+            plant_MAC=plant_MAC,
+            number_of_readings=1,
+            number_of_waterings=1
         )
 
+        # Map and predict
+        model_input = map_plant_data_to_model_input(plant_data)
+        predicted_seconds = predictor.predict(**model_input)
+
+        return predicted_seconds
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def map_plant_data_to_model_input(plant_data: dict) -> dict:
+    """
+    Maps the gRPC returned plant data to the format expected by PumpTimeModel.predict()
+    """
+    sensor = plant_data["sensorData"]
+    watering = plant_data["watering"]
+    optimal = plant_data
+
+    return {
+        "temperature": sensor["Temperature"],
+        "air_humidity": sensor["AirHumidity"],
+        "soil_humidity": sensor["SoilHumidity"],
+        "light_intensity": sensor["LightIntensity"],
+        "sensor_timestamp": sensor["Timestamp"],
+        "last_water_timestamp": watering["LastWaterTime"],
+
+        "optimal_temperature": optimal["optimalTemperature"],
+        "optimal_air_humidity": optimal["optimalAirHumidity"],
+        "optimal_soil_humidity": optimal["optimalSoilHumidity"],
+        "optimal_light_intensity": optimal["optimalLightIntensity"],
+    }
 
 
