@@ -1,7 +1,7 @@
 {
-  "name": "Mal Dev",
-  "dockerComposeFile": "../docker-compose.dev.yml",
-  "service": "maldev",
+  "name": "Mal Dev GPU",
+  "dockerComposeFile": "../../docker-compose.dev.yml",
+  "service": "maldev-gpu",
   "workspaceFolder": "/workspace",
   "shutdownAction": "none",
   "updateRemoteUserUID": false,
