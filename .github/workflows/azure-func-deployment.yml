@@ -2,7 +2,7 @@ name: Build and push serverless image
 
 on:
   push:
-    branches: [azure-functions]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

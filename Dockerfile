@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 
 #clone from main
 
-RUN git clone --depth 1 --branch azure-functions https://github.com/VIA-Plantify/Plantify-MachineLearning /code
+RUN git clone --depth 1 --branch main https://github.com/VIA-Plantify/Plantify-MachineLearning /code
 
 # install dependencies
 RUN uv sync --frozen --no-dev
