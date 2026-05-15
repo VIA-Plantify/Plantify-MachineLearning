@@ -1,4 +1,4 @@
-name: Build and Push to Azure
+name: Build and Push Serverless Image
 
 on:
   push:
