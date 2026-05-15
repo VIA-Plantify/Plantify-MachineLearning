@@ -8,5 +8,5 @@
   "postCreateCommand": "chmod +x /workspace/.scripts/*.sh && bash /workspace/.scripts/setup-dev.sh",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
+  ]
 }
