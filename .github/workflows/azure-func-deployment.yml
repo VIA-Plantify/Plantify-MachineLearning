@@ -41,7 +41,7 @@ jobs:
         with:
           containerAppName: plantify-ml
           resourceGroup: Plantify
-          imageToDeploy: ghcr.io/via-plantify/plantify-machinelearning/${{ inputs.image_name }}:${{ steps.vars.outputs.sha_short }}
+          imageToDeploy: ghcr.io/via-plantify/plantify-machinelearning/${{ vars.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
           registryUrl: ghcr.io
           registryUsername: ${{ github.actor }}
           registryPassword: ${{ secrets.GITHUB_TOKEN }}
