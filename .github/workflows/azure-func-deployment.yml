@@ -30,3 +30,12 @@ jobs:
           tags: |
             ghcr.io/via-plantify/plantify-machinelearning/mlapi:latest
             ghcr.io/via-plantify/plantify-machinelearning/mlapi:${{ github.sha }}
+      - name: Deploy to Azure Container App
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          containerAppName: plantify-ml                     
+          resourceGroup: your-resource-group-name
+          imageToDeploy: ghcr.io/via-plantify/plantify-machinelearning/mlapi:${{ steps.vars.outputs.sha_short }}
+          registryUrl: ghcr.io
+          registryUsername: ${{ github.actor }}
+          registryPassword: ${{ secrets.GITHUB_TOKEN }}
