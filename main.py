@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 
 from entities.Plant import Plant
@@ -7,10 +8,28 @@ from entities.Watering import Watering
 from fastapi import FastAPI
 
 from api.plant_api_controller import router as plant_router
+from api.pump_time_api_controller import router as pump_router
+from models.pump_time.pump_time_model import PumpTimeModel
 
-app = FastAPI(title="Plantify ML API")
+ml_models = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model once on startup
+    print("Loading PumpTimeModel Singleton...")
+    ml_models["pump_time"] = PumpTimeModel()
+
+    yield
+
+    # Clean up on shutdown if necessary
+    ml_models.clear()
+
+
+app = FastAPI(title="Plantify ML API", lifespan=lifespan)
 
 app.include_router(plant_router)
+app.include_router(pump_router)
+
 
 
 def dummy():
@@ -33,3 +52,4 @@ async def root():
 @app.get("/data")
 async def dummy_api():
     return asdict(dummy())
+
