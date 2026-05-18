@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def data_preparation():
+def preprocessing():
     # Load files
     data_sensors = pd.read_csv("Indoor_Plant_Health_and_Growth_Factors.csv")
     data_optimal = pd.read_csv("optimal_plant_conditions.csv")
