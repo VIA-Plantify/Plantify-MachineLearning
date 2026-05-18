@@ -188,3 +188,4 @@ cython_debug/
 /datapreparation/mockdata/mock_data/waterings.csv
 /models/pump_time/liniar_reg_model.ubj
 /models/pump_time/xgb_tree_model.ubj
+/models/pump_time/random_forest_model.ubj

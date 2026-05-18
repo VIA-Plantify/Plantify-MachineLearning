@@ -1,14 +1,13 @@
 from pathlib import Path
-import xgboost as xgb
+from sklearn.ensemble import RandomForestRegressor
 import pandas as pd
+import joblib
+model = RandomForestRegressor()
 
-MODEL_PATH = Path(__file__).parent / "xgb_tree_model.ubj"
+MODEL_PATH = Path(__file__).parent / "random_forest_model.ubj"
 
-def load_model():
-    model = xgb.XGBRegressor()
-    model.load_model(MODEL_PATH)
-    return model
-model = load_model()
+model = joblib.load(MODEL_PATH)
+
 def prepare_input(temperature, air_humidity, soil_humidity, light_intensity,
                   sensor_timestamp, last_water_timestamp,
                   optimal_temperature, optimal_air_humidity,
@@ -239,10 +238,10 @@ real_cases = [
     prepare_input(21.4, 60, 85, 45, "2026-05-13 02:37", "2026-05-10 08:00", 23, 55, 80, 600),
     prepare_input(21.4, 62, 85, 34, "2026-05-13 02:57", "2026-05-10 08:00", 23, 55, 80, 600),
     prepare_input(21.4, 63, 85, 34, "2026-05-13 03:17", "2026-05-10 08:00", 23, 55, 80, 600),
-    prepare_input(21.4, 63, 45, 34, "2026-05-13 03:37", "2026-05-10 08:00", 23, 55, 80, 600),
-    prepare_input(21.4, 64, 55, 34, "2026-05-13 03:57", "2026-05-10 08:00", 23, 55, 80, 600),
-    prepare_input(21.4, 64, 65, 34, "2026-05-13 04:17", "2026-05-10 08:00", 23, 55, 80, 600),
-    prepare_input(21.8, 64, 65, 560, "2026-05-13 07:09", "2026-05-10 08:00", 23, 55, 80, 600),
+    prepare_input(21.4, 63, 85, 34, "2026-05-13 03:37", "2026-05-10 08:00", 23, 55, 80, 600),
+    prepare_input(21.4, 64, 85, 34, "2026-05-13 03:57", "2026-05-10 08:00", 23, 55, 80, 600),
+    prepare_input(21.4, 64, 85, 34, "2026-05-13 04:17", "2026-05-10 08:00", 23, 55, 80, 600),
+    prepare_input(21.8, 64, 85, 560, "2026-05-13 07:09", "2026-05-10 08:00", 23, 55, 80, 600),
 ]
 
 real_labels = [
@@ -319,9 +318,7 @@ real_labels = [
     "Early Morning - Full Light Cycle",
 ]
 
-
 for label, case in zip(real_labels, real_cases):
-
     pred = model.predict(case)[0]
     print(f"{label:35s}: Pump runtime = {pred:6.2f} seconds")
 
